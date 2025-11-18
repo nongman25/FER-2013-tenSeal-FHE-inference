@@ -1,0 +1,41 @@
+# Virtual Environment
+.venv
+venv/
+env/
+
+# Data files
+data/
+./data
+*.csv
+
+# Python cache
+*pycache*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Model files
+*.pt
+*.pth
+*.onnx
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# API Keys
+kaggle.json
+*.json.secret
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
