@@ -29,6 +29,34 @@ FeatureMap = List[List[List[EncryptedScalar]]]  # channel -> row -> col
 
 
 @dataclass
+class PackedFeatureMap:
+    """한 개의 CKKS 벡터에 채널별 특징 지도를 평탄화해 저장한다."""
+
+    ciphers: List[ts.CKKSVector]
+    height: int
+    width: int
+
+    @property
+    def channels(self) -> int:
+        return len(self.ciphers)
+
+    @property
+    def slots_per_channel(self) -> int:
+        return self.height * self.width
+
+
+@dataclass
+class PackedVector:
+    """완전히 평탄화 된 벡터 표현 (FC 계층 입력/출력에 사용)."""
+
+    segments: List[ts.CKKSVector]
+    segment_length: int
+
+    def total_length(self) -> int:
+        return len(self.segments) * self.segment_length
+
+
+@dataclass
 class NormalizationStats:
     mean: float = 0.0
     std: float = 1.0
@@ -192,6 +220,150 @@ class EncryptedCNNRunner:
         return padded
 
 
+class PackedEncryptedCNNRunner:
+    """채널 단위로 패킹한 CKKS 벡터를 이용해 회전 기반 합성곱을 수행한다."""
+
+    def __init__(self, context: ts.Context, params: Dict[str, List[Dict[str, torch.Tensor]]], poly_a: float = 0.8, poly_b: float = 0.2) -> None:
+        self.context = context
+        self.conv_params = params["conv"]
+        self.linear_params = params["linear"]
+        self.poly_a = poly_a
+        self.poly_b = poly_b
+        self._shift_cache: Dict[Tuple[int, int, int, int], ts.PlainTensor] = {}
+        self._pool_matrix_cache: Dict[Tuple[int, int, int], ts.PlainTensor] = {}
+
+    def encrypt_image_packed(self, tensor: torch.Tensor) -> PackedFeatureMap:
+        assert tensor.ndim == 3 and tensor.shape[0] == 1, "Expected (1, H, W) tensor"
+        _, height, width = tensor.shape
+        flat = tensor.reshape(-1).tolist()
+        cipher = ts.ckks_vector(self.context, flat)
+        return PackedFeatureMap([cipher], height, width)
+
+    def conv2d(self, fmap: PackedFeatureMap, weight: torch.Tensor, bias: torch.Tensor | None, padding: int = 1) -> PackedFeatureMap:
+        outputs: List[ts.CKKSVector] = []
+        height, width = fmap.height, fmap.width
+        for out_idx in range(weight.shape[0]):
+            acc = self._zero_vector(fmap.slots_per_channel)
+            for in_idx, cipher in enumerate(fmap.ciphers):
+                kernel = weight[out_idx, in_idx]
+                acc = self._accumulate_conv(acc, cipher, kernel, height, width, padding)
+            if bias is not None:
+                acc = acc + float(bias[out_idx].item())
+            outputs.append(acc)
+        return PackedFeatureMap(outputs, height, width)
+
+    def avg_pool2d(self, fmap: PackedFeatureMap, kernel_size: int = 2, stride: int = 2) -> PackedFeatureMap:
+        new_height = fmap.height // stride
+        new_width = fmap.width // stride
+        matrix = self._get_pool_matrix(fmap.height, fmap.width, stride)
+        pooled = [cipher.mm(matrix) for cipher in fmap.ciphers]
+        return PackedFeatureMap(pooled, new_height, new_width)
+
+    def poly_act_map(self, fmap: PackedFeatureMap) -> PackedFeatureMap:
+        activated = [self._poly_act(cipher) for cipher in fmap.ciphers]
+        return PackedFeatureMap(activated, fmap.height, fmap.width)
+
+    def flatten(self, fmap: PackedFeatureMap) -> PackedVector:
+        return PackedVector(fmap.ciphers, fmap.slots_per_channel)
+
+    def linear(self, vector: PackedVector, weight: torch.Tensor, bias: torch.Tensor | None) -> PackedVector:
+        outputs: List[ts.CKKSVector] = []
+        seg_len = vector.segment_length
+        total_inputs = vector.total_length()
+        assert weight.shape[1] == total_inputs, "Linear input dimension mismatch"
+        for row_idx in range(weight.shape[0]):
+            row = weight[row_idx]
+            acc = self._zero_scalar()
+            offset = 0
+            for segment in vector.segments:
+                coeffs = row[offset : offset + seg_len].detach().cpu().numpy()
+                contrib = segment.dot(coeffs)
+                acc = acc + contrib
+                offset += seg_len
+            if bias is not None:
+                acc = acc + float(bias[row_idx].item())
+            outputs.append(acc)
+        return PackedVector(outputs, 1)
+
+    def poly_act_vector(self, vector: PackedVector) -> PackedVector:
+        activated = [self._poly_act(segment) for segment in vector.segments]
+        return PackedVector(activated, vector.segment_length)
+
+    def forward(self, tensor: torch.Tensor) -> List[ts.CKKSVector]:
+        fmap = self.encrypt_image_packed(tensor)
+        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], padding=1)
+        fmap = self.poly_act_map(fmap)
+        fmap = self.avg_pool2d(fmap, kernel_size=2, stride=2)
+        fmap = self.conv2d(fmap, self.conv_params[1]["weight"], self.conv_params[1]["bias"], padding=1)
+        fmap = self.poly_act_map(fmap)
+        fmap = self.avg_pool2d(fmap, kernel_size=2, stride=2)
+        vector = self.flatten(fmap)
+        vector = self.linear(vector, self.linear_params[0]["weight"], self.linear_params[0]["bias"])
+        vector = self.poly_act_vector(vector)
+        vector = self.linear(vector, self.linear_params[1]["weight"], self.linear_params[1]["bias"])
+        return vector.segments
+
+    def _accumulate_conv(self, acc: ts.CKKSVector, cipher: ts.CKKSVector, kernel: torch.Tensor, height: int, width: int, padding: int) -> ts.CKKSVector:
+        kernel_size = kernel.shape[0]
+        for ky in range(kernel_size):
+            for kx in range(kernel_size):
+                coeff = float(kernel[ky, kx].item())
+                if abs(coeff) < 1e-9:
+                    continue
+                dy = ky - padding
+                dx = kx - padding
+                shifted = cipher.mm(self._get_shift_matrix(height, width, dy, dx))
+                acc = acc + (shifted * coeff)
+        return acc
+
+    def _poly_act(self, cipher: ts.CKKSVector) -> ts.CKKSVector:
+        cubic = cipher * cipher * cipher
+        return cipher * self.poly_a + cubic * self.poly_b
+
+    def _zero_vector(self, length: int) -> ts.CKKSVector:
+        return ts.ckks_vector(self.context, [0.0] * length)
+
+    def _zero_scalar(self) -> ts.CKKSVector:
+        return ts.ckks_vector(self.context, [0.0])
+
+    def _get_shift_matrix(self, height: int, width: int, dy: int, dx: int) -> ts.PlainTensor:
+        key = (height, width, dy, dx)
+        if key not in self._shift_cache:
+            size = height * width
+            # TenSEAL mm expects (input_size, output_size) - transpose needed
+            matrix = np.zeros((size, size), dtype=np.float64)
+            for y in range(height):
+                for x in range(width):
+                    src_y = y - dy  # source position (reverse the shift)
+                    src_x = x - dx
+                    src_idx = y * width + x
+                    # Only copy if source is within bounds
+                    if 0 <= src_y < height and 0 <= src_x < width:
+                        dest_idx = src_y * width + src_x
+                        matrix[dest_idx, src_idx] = 1.0
+            self._shift_cache[key] = ts.plain_tensor(matrix)
+        return self._shift_cache[key]
+
+    def _get_pool_matrix(self, height: int, width: int, stride: int) -> ts.PlainTensor:
+        key = (height, width, stride)
+        if key not in self._pool_matrix_cache:
+            new_height = height // stride
+            new_width = width // stride
+            matrix = np.zeros((height * width, new_height * new_width), dtype=np.float64)
+            scale = 1.0 / (stride * stride)
+            for y in range(new_height):
+                for x in range(new_width):
+                    col = y * new_width + x
+                    for ky in range(stride):
+                        for kx in range(stride):
+                            src_y = y * stride + ky
+                            src_x = x * stride + kx
+                            row = src_y * width + src_x
+                            matrix[row, col] = scale
+            self._pool_matrix_cache[key] = ts.plain_tensor(matrix)
+        return self._pool_matrix_cache[key]
+
+
 def load_plain_model(device: torch.device | None = None) -> Tuple[FHEEmotionCNN, NormalizationStats]:
     device = device or torch.device("cpu")
     model = FHEEmotionCNN()
@@ -230,11 +402,16 @@ def decrypt_logits(logits: Sequence[EncryptedScalar]) -> np.ndarray:
     return np.asarray(values)
 
 
-def encrypted_inference_demo(context: ts.Context | None = None, sample_index: int = 0) -> Dict[str, np.ndarray]:
+def encrypted_inference_demo(context: ts.Context | None = None, sample_index: int = 0, use_packed: bool = True) -> Dict[str, np.ndarray]:
     model, stats = load_plain_model()
     params = extract_fhe_parameters(model)
     context = context or create_context()
-    runner = EncryptedCNNRunner(context, params)
+    if use_packed:
+        LOGGER.info("Using packed TenSEAL runner for inference")
+        runner = PackedEncryptedCNNRunner(context, params)
+    else:
+        LOGGER.info("Using scalar TenSEAL runner for inference (fallback)")
+        runner = EncryptedCNNRunner(context, params)
 
     images, labels = _load_split_tensors("test")
     total_samples = images.shape[0]

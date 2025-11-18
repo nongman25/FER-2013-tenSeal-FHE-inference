@@ -8,6 +8,7 @@ import numpy as np
 import tenseal as ts
 
 
+# TenSEAL 공식 튜토리얼과 동일한 파라미터(Poly=8192, 4개의 모드 체인)를 기본값으로 사용한다.
 DEFAULT_POLY_MODULUS_DEGREE = 8192
 DEFAULT_COEFF_MOD_BIT_SIZES = (40, 21, 21, 40)
 DEFAULT_GLOBAL_SCALE = 2**40

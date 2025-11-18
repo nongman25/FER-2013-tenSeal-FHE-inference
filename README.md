@@ -41,6 +41,10 @@ cd fhe_emotion
   ./scripts/run_encrypted_infer.sh
   ```
 - 노트북: `notebooks/03_tenseal_encrypted_inference.ipynb`에서 이미지 시각화와 로그를 동시에 확인할 수 있습니다.
+- TenSEAL 추론 실행기:
+  - `PackedEncryptedCNNRunner`(기본): TenSEAL 문서의 im2col/행렬곱 패턴을 따라 채널 전체를 하나의 CKKSVector에 패킹합니다. 회전 연산 대신 `ckks_vector.mm(plain_tensor)`으로 미리 계산한 permutation/평균풀링 행렬을 곱해 합성곱‧풀링을 수행하므로 현재 TenSEAL API(rotate 미제공)와 호환됩니다.
+  - `EncryptedCNNRunner`: 픽셀별 스칼라 암호문을 사용하는 디버그용 구현입니다. `encrypted_inference_demo(..., use_packed=False)`로 호출할 수 있습니다.
+- 컨텍스트는 `he/tenseal_context.py`에서 설정한 대로 CKKS(폴리 차수 8192, 모드 체인 `[40, 21, 21, 40]`, 스케일 `2**40`)이며 Galois/Relin 키를 생성해야 `mm` 기반 패킹 추론이 동작합니다. 이 구성은 TenSEAL 튜토리얼에서 사용하는 기본값과 동일해 오류 없이 컨텍스트를 만들 수 있습니다.
 
 ## 디렉터리 및 파일 설명
 - `fhe_emotion/models/fhe_cnn.py` : 다항식 활성화와 평균 풀링만 사용하는 FHE 친화적 CNN 정의, TenSEAL용 파라미터 추출 도우미 포함.
