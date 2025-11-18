@@ -4,7 +4,7 @@ PyTorch와 TenSEAL을 이용해 FER2013 얼굴 감정 인식 데이터셋을 준
 
 ## 주요 특징
 - FER2013 CSV를 불러와 `torch.Tensor` 형태로 전처리하고, 클래스 불균형을 보정하기 위한 가중치를 계산합니다.
-- 평균 풀링과 다항식 활성화(`PolyAct`)만을 사용하는 얕은 CNN(`FHEEmotionCNN`)을 PyTorch로 학습합니다.
+- 평균 풀링과 선형 다항 활성화(`PolyAct(x) = a·x + b`)만을 사용하는 얕은 CNN(`FHEEmotionCNN`)을 PyTorch로 학습합니다. 이 활성화는 곱셈과 덧셈만 사용해 CKKS 스케일 폭주 없이 TenSEAL에서 재현할 수 있습니다.
 - TenSEAL CKKS 컨텍스트에서 동일한 연산을 스칼라 단위로 재현하여 단일 이미지 암호문 추론 데모를 제공합니다.
 
 ## 환경 준비
@@ -44,7 +44,7 @@ cd fhe_emotion
 - TenSEAL 추론 실행기:
   - `PackedEncryptedCNNRunner`(기본): TenSEAL 문서의 im2col/행렬곱 패턴을 따라 채널 전체를 하나의 CKKSVector에 패킹합니다. 회전 연산 대신 `ckks_vector.mm(plain_tensor)`으로 미리 계산한 permutation/평균풀링 행렬을 곱해 합성곱‧풀링을 수행하므로 현재 TenSEAL API(rotate 미제공)와 호환됩니다.
   - `EncryptedCNNRunner`: 픽셀별 스칼라 암호문을 사용하는 디버그용 구현입니다. `encrypted_inference_demo(..., use_packed=False)`로 호출할 수 있습니다.
-- 컨텍스트는 `he/tenseal_context.py`에서 설정한 대로 CKKS(폴리 차수 8192, 모드 체인 `[40, 21, 21, 40]`, 스케일 `2**40`)이며 Galois/Relin 키를 생성해야 `mm` 기반 패킹 추론이 동작합니다. 이 구성은 TenSEAL 튜토리얼에서 사용하는 기본값과 동일해 오류 없이 컨텍스트를 만들 수 있습니다.
+- 컨텍스트는 `he/tenseal_context.py`에서 설정한 대로 CKKS(폴리 차수 8192, 모드 체인 `[60, 40, 40, 60]`, 스케일 `2**40`)이며 Galois/Relin 키를 생성해야 `mm` 기반 패킹 추론이 동작합니다. 기본 체인 생성에 실패하면 코드가 자동으로 `[40, 21, 21, 40]` 등 대체 체인을 재시도하므로 노트북/CLI 어디서나 안정적으로 컨텍스트를 만들 수 있습니다.
 
 ## 디렉터리 및 파일 설명
 - `fhe_emotion/models/fhe_cnn.py` : 다항식 활성화와 평균 풀링만 사용하는 FHE 친화적 CNN 정의, TenSEAL용 파라미터 추출 도우미 포함.

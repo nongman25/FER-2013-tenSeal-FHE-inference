@@ -9,7 +9,7 @@ from torch import Tensor, nn
 
 
 class PolyAct(nn.Module):
-    """Low-degree polynomial activation for homomorphic evaluation."""
+    """엮인 다항(1차) 활성화. 곱셈과 덧셈만 사용하므로 HE 친화적이다."""
 
     def __init__(self, a: float = 0.8, b: float = 0.2) -> None:
         super().__init__()
@@ -17,9 +17,8 @@ class PolyAct(nn.Module):
         self.b = b
 
     def forward(self, x: Tensor) -> Tensor:  # noqa: D401
-        """Apply `a * x + b * x^3`."""
-        cubic = x * x * x
-        return self.a * x + self.b * cubic
+        """Apply `a * x + b`."""
+        return self.a * x + self.b
 
 
 class FHEEmotionCNN(nn.Module):

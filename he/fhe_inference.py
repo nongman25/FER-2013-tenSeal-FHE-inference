@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
@@ -223,7 +224,16 @@ class EncryptedCNNRunner:
 class PackedEncryptedCNNRunner:
     """채널 단위로 패킹한 CKKS 벡터를 이용해 회전 기반 합성곱을 수행한다."""
 
-    def __init__(self, context: ts.Context, params: Dict[str, List[Dict[str, torch.Tensor]]], poly_a: float = 0.8, poly_b: float = 0.2) -> None:
+    def __init__(
+        self,
+        context: ts.Context,
+        params: Dict[str, List[Dict[str, torch.Tensor]]],
+        poly_a: float = 0.8,
+        poly_b: float = 0.2,
+        *,
+        log_steps: bool = True,
+        warn_over_seconds: float | None = 180.0,
+    ) -> None:
         self.context = context
         self.conv_params = params["conv"]
         self.linear_params = params["linear"]
@@ -231,21 +241,27 @@ class PackedEncryptedCNNRunner:
         self.poly_b = poly_b
         self._shift_cache: Dict[Tuple[int, int, int, int], ts.PlainTensor] = {}
         self._pool_matrix_cache: Dict[Tuple[int, int, int], ts.PlainTensor] = {}
+        self._log_steps = log_steps
+        self._warn_over_seconds = warn_over_seconds
 
     def encrypt_image_packed(self, tensor: torch.Tensor) -> PackedFeatureMap:
         assert tensor.ndim == 3 and tensor.shape[0] == 1, "Expected (1, H, W) tensor"
         _, height, width = tensor.shape
         flat = tensor.reshape(-1).tolist()
-        cipher = ts.ckks_vector(self.context, flat)
+        cipher = ts.ckks_vector(self.context, flat, scale=self.context.global_scale)
         return PackedFeatureMap([cipher], height, width)
 
     def conv2d(self, fmap: PackedFeatureMap, weight: torch.Tensor, bias: torch.Tensor | None, padding: int = 1) -> PackedFeatureMap:
         outputs: List[ts.CKKSVector] = []
         height, width = fmap.height, fmap.width
         for out_idx in range(weight.shape[0]):
+            if self._log_steps:
+                LOGGER.info("    • 출력 채널 %d/%d 누적 시작", out_idx + 1, weight.shape[0])
             acc = self._zero_vector(fmap.slots_per_channel)
             for in_idx, cipher in enumerate(fmap.ciphers):
                 kernel = weight[out_idx, in_idx]
+                if self._log_steps:
+                    LOGGER.info("        - 입력 채널 %d/%d 처리", in_idx + 1, len(fmap.ciphers))
                 acc = self._accumulate_conv(acc, cipher, kernel, height, width, padding)
             if bias is not None:
                 acc = acc + float(bias[out_idx].item())
@@ -291,21 +307,23 @@ class PackedEncryptedCNNRunner:
 
     def forward(self, tensor: torch.Tensor) -> List[ts.CKKSVector]:
         fmap = self.encrypt_image_packed(tensor)
-        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], padding=1)
-        fmap = self.poly_act_map(fmap)
-        fmap = self.avg_pool2d(fmap, kernel_size=2, stride=2)
-        fmap = self.conv2d(fmap, self.conv_params[1]["weight"], self.conv_params[1]["bias"], padding=1)
-        fmap = self.poly_act_map(fmap)
-        fmap = self.avg_pool2d(fmap, kernel_size=2, stride=2)
-        vector = self.flatten(fmap)
-        vector = self.linear(vector, self.linear_params[0]["weight"], self.linear_params[0]["bias"])
-        vector = self.poly_act_vector(vector)
-        vector = self.linear(vector, self.linear_params[1]["weight"], self.linear_params[1]["bias"])
+        fmap = self._timed("Packed Conv1", lambda: self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], padding=1))
+        fmap = self._timed("Packed PolyAct1", lambda: self.poly_act_map(fmap))
+        fmap = self._timed("Packed AvgPool1", lambda: self.avg_pool2d(fmap, kernel_size=2, stride=2))
+        fmap = self._timed("Packed Conv2", lambda: self.conv2d(fmap, self.conv_params[1]["weight"], self.conv_params[1]["bias"], padding=1))
+        fmap = self._timed("Packed PolyAct2", lambda: self.poly_act_map(fmap))
+        fmap = self._timed("Packed AvgPool2", lambda: self.avg_pool2d(fmap, kernel_size=2, stride=2))
+        vector = self._timed("Flatten", lambda: self.flatten(fmap))
+        vector = self._timed("FC1", lambda: self.linear(vector, self.linear_params[0]["weight"], self.linear_params[0]["bias"]))
+        vector = self._timed("PolyAct FC1", lambda: self.poly_act_vector(vector))
+        vector = self._timed("FC2", lambda: self.linear(vector, self.linear_params[1]["weight"], self.linear_params[1]["bias"]))
         return vector.segments
 
     def _accumulate_conv(self, acc: ts.CKKSVector, cipher: ts.CKKSVector, kernel: torch.Tensor, height: int, width: int, padding: int) -> ts.CKKSVector:
         kernel_size = kernel.shape[0]
         for ky in range(kernel_size):
+            if self._log_steps:
+                LOGGER.debug("            ky=%d/%d", ky + 1, kernel_size)
             for kx in range(kernel_size):
                 coeff = float(kernel[ky, kx].item())
                 if abs(coeff) < 1e-9:
@@ -317,14 +335,13 @@ class PackedEncryptedCNNRunner:
         return acc
 
     def _poly_act(self, cipher: ts.CKKSVector) -> ts.CKKSVector:
-        cubic = cipher * cipher * cipher
-        return cipher * self.poly_a + cubic * self.poly_b
+        return cipher * self.poly_a + self.poly_b
 
     def _zero_vector(self, length: int) -> ts.CKKSVector:
-        return ts.ckks_vector(self.context, [0.0] * length)
+        return ts.ckks_vector(self.context, [0.0] * length, scale=self.context.global_scale)
 
     def _zero_scalar(self) -> ts.CKKSVector:
-        return ts.ckks_vector(self.context, [0.0])
+        return ts.ckks_vector(self.context, [0.0], scale=self.context.global_scale)
 
     def _get_shift_matrix(self, height: int, width: int, dy: int, dx: int) -> ts.PlainTensor:
         key = (height, width, dy, dx)
@@ -362,6 +379,18 @@ class PackedEncryptedCNNRunner:
                             matrix[row, col] = scale
             self._pool_matrix_cache[key] = ts.plain_tensor(matrix)
         return self._pool_matrix_cache[key]
+
+    def _timed(self, name: str, fn):
+        if not self._log_steps:
+            return fn()
+        LOGGER.info("▶ %s 시작", name)
+        start = time.perf_counter()
+        result = fn()
+        elapsed = time.perf_counter() - start
+        LOGGER.info("✓ %s 완료 (%.2f초)", name, elapsed)
+        if self._warn_over_seconds and elapsed > self._warn_over_seconds:
+            LOGGER.warning("%s 단계가 %.2f초 이상 소요되었습니다. 매개변수(tensor 크기/컨텍스트)를 줄이거나 use_packed=False로 비교해 보세요.", name, elapsed)
+        return result
 
 
 def load_plain_model(device: torch.device | None = None) -> Tuple[FHEEmotionCNN, NormalizationStats]:
