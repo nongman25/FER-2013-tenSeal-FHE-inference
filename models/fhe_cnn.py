@@ -16,15 +16,18 @@ class Square(nn.Module):
 
 class FHEEmotionCNN(nn.Module):
     """
-    CNN architecture compatible with TenSEAL Tutorial 4.
-    Adapted for FER2013 (48x48 input, 7 classes).
+    Wide 1-Conv FHE-friendly CNN without Batch Normalization.
+    Optimized for TenSEAL Packed Inference (im2col).
+    Structure: Conv(24ch, s2) -> Square -> FC -> Square -> FC
     """
 
     def __init__(self, num_classes: int = 7) -> None:
         super().__init__()
-        # Conv1: 1 -> 16 channels, kernel 7x7, stride 3
         # Input: 48x48
+        
+        # Conv1: 1 -> 16 channels, kernel 7x7, stride 3
         # Output: (48 - 7) // 3 + 1 = 14. Shape: 16 x 14 x 14
+        # Total slots needed: 16 * 196 = 3,136 (Fits in 16384 slots of poly_modulus_degree=32768)
         self.conv1 = nn.Conv2d(1, 16, kernel_size=7, stride=3, padding=0)
         self.act1 = Square()
         
@@ -37,9 +40,12 @@ class FHEEmotionCNN(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = self.conv1(x)
         x = self.act1(x)
+        
         x = x.view(x.size(0), -1)  # Flatten
+        
         x = self.fc1(x)
         x = self.act2(x)
+        
         x = self.fc2(x)
         return x
 
@@ -50,20 +56,20 @@ def extract_fhe_parameters(model: nn.Module) -> Dict[str, List[Dict[str, Tensor]
     
     # Conv1
     params["conv"].append({
-        "weight": model.conv1.weight.detach(),  # Shape: (4, 1, 7, 7)
-        "bias": model.conv1.bias.detach()       # Shape: (4,)
+        "weight": model.conv1.weight.detach(),
+        "bias": model.conv1.bias.detach()
     })
     
     # FC1
     params["linear"].append({
-        "weight": model.fc1.weight.detach(),    # Shape: (64, 784)
-        "bias": model.fc1.bias.detach()         # Shape: (64,)
+        "weight": model.fc1.weight.detach(),
+        "bias": model.fc1.bias.detach()
     })
     
     # FC2
     params["linear"].append({
-        "weight": model.fc2.weight.detach(),    # Shape: (7, 64)
-        "bias": model.fc2.bias.detach()         # Shape: (7,)
+        "weight": model.fc2.weight.detach(),
+        "bias": model.fc2.bias.detach()
     })
     
     return params

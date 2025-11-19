@@ -4,8 +4,11 @@ PyTorch와 TenSEAL을 이용해 FER2013 얼굴 감정 인식 데이터셋을 준
 
 ## 주요 특징
 - FER2013 CSV를 불러와 `torch.Tensor` 형태로 전처리하고, 클래스 불균형을 보정하기 위한 가중치를 계산합니다.
-- 평균 풀링과 선형 다항 활성화(`PolyAct(x) = a·x + b`)만을 사용하는 얕은 CNN(`FHEEmotionCNN`)을 PyTorch로 학습합니다. 이 활성화는 곱셈과 덧셈만 사용해 CKKS 스케일 폭주 없이 TenSEAL에서 재현할 수 있습니다.
-- TenSEAL CKKS 컨텍스트에서 동일한 연산을 스칼라 단위로 재현하여 단일 이미지 암호문 추론 데모를 제공합니다.
+- **Wide 1-Conv 아키텍처**: Stride 3 합성곱(16 채널, 7x7 커널) + Square 활성화 + 2-layer FC를 사용하는 얕은 CNN(`FHEEmotionCNN`)을 PyTorch로 학습합니다.
+  - Batch Normalization 제거: FHE 추론 단순화를 위해 BN 완전 제거
+  - Multiplicative Depth 최소화: Conv → Square → FC → Square (총 4단계)
+  - CKKS 슬롯 효율: Stride 3 사용으로 16×196=3,136 슬롯만 필요 (32768 poly_modulus_degree에 여유롭게 수용)
+- TenSEAL CKKS 컨텍스트에서 im2col 기반 패킹 추론을 통해 암호화된 이미지에 대한 감정 분류를 수행합니다.
 
 ## 환경 준비
 ```bash
@@ -31,7 +34,8 @@ cd fhe_emotion
   cd fhe_emotion
   ./scripts/run_train.sh
   ```
-- 최적 가중치는 `models/fhe_cnn_fer2013.pt`, 입력 정규화 통계는 `models/normalization_stats.json`으로 저장됩니다.
+- 학습 설정: 50 epochs, Adam optimizer, CrossEntropyLoss with class weights
+- 최적 가중치는 `models/fhe_cnn_fer2013_2.pt`, 입력 정규화 통계는 `models/normalization_stats.json`으로 저장됩니다.
 
 ## 암호화 추론 데모
 - 단일 샘플에 대해 평문/암호문 추론 결과를 비교합니다.
@@ -40,24 +44,43 @@ cd fhe_emotion
   cd fhe_emotion
   ./scripts/run_encrypted_infer.sh
   ```
-- 노트북: `notebooks/03_tenseal_encrypted_inference.ipynb`에서 이미지 시각화와 로그를 동시에 확인할 수 있습니다.
+- 노트북:
+  - `notebooks/03_tenseal_encrypted_inference.ipynb`: 단일 이미지에 대한 평문/암호문 추론 비교 및 시각화
+  - `notebooks/04_tenseal_test_accuracy.ipynb`: 다중 샘플(20개)에 대한 정확도 테스트 및 추론 시간 측정
 - TenSEAL 추론 실행기:
-  - `PackedEncryptedCNNRunner`(기본): TenSEAL 문서의 im2col/행렬곱 패턴을 따라 채널 전체를 하나의 CKKSVector에 패킹합니다. 회전 연산 대신 `ckks_vector.mm(plain_tensor)`으로 미리 계산한 permutation/평균풀링 행렬을 곱해 합성곱‧풀링을 수행하므로 현재 TenSEAL API(rotate 미제공)와 호환됩니다.
+  - `PackedEncryptedCNNRunner`(기본): im2col 인코딩으로 입력을 단일 CKKSVector에 패킹하고 `conv2d_im2col` 연산을 사용합니다. 추론 시간 약 18-20초/샘플.
   - `EncryptedCNNRunner`: 픽셀별 스칼라 암호문을 사용하는 디버그용 구현입니다. `encrypted_inference_demo(..., use_packed=False)`로 호출할 수 있습니다.
-- 컨텍스트는 `he/tenseal_context.py`에서 설정한 대로 CKKS(폴리 차수 8192, 모드 체인 `[60, 40, 40, 60]`, 스케일 `2**40`)이며 Galois/Relin 키를 생성해야 `mm` 기반 패킹 추론이 동작합니다. 기본 체인 생성에 실패하면 코드가 자동으로 `[40, 21, 21, 40]` 등 대체 체인을 재시도하므로 노트북/CLI 어디서나 안정적으로 컨텍스트를 만들 수 있습니다.
+- **CKKS 컨텍스트 파라미터** (`he/tenseal_context.py`):
+  - `poly_modulus_degree`: 32768 (16,384 슬롯 제공)
+  - `coeff_mod_bit_sizes`: [31, 26, 26, 26, 26, 26, 26, 31]
+  - `global_scale`: 2^26
+  - Multiplicative depth 지원: 3-4 레벨 (Conv→Square→FC→Square)
 
 ## 디렉터리 및 파일 설명
-- `fhe_emotion/models/fhe_cnn.py` : 다항식 활성화와 평균 풀링만 사용하는 FHE 친화적 CNN 정의, TenSEAL용 파라미터 추출 도우미 포함.
-- `fhe_emotion/he/tenseal_context.py` : CKKS 컨텍스트 생성, 벡터 암복호화, 컨텍스트 직렬화 유틸리티.
-- `fhe_emotion/he/fhe_inference.py` : PyTorch 가중치 로딩, 스칼라 기반 TenSEAL 연산(합성곱, 평균 풀링, 선형계층, PolyAct) 구현, `encrypted_inference_demo` 제공.
-- `fhe_emotion/notebooks/*.ipynb` : 01 데이터 준비, 02 모델 학습, 03 TenSEAL 추론 흐름을 단계별로 재현하는 노트북.
-- `fhe_emotion/scripts/setup_env.sh` : 프로젝트 의존성 설치 및 Jupyter 커널 등록.
-- `fhe_emotion/scripts/run_train.sh` : 학습 노트북 비대화식 실행.
-- `fhe_emotion/scripts/run_encrypted_infer.sh` : TenSEAL 추론 모듈 실행.
-- `fhe_emotion/data/processed/` : 전처리 후 저장되는 텐서 및 클래스 가중치.
+- `fhe_emotion/models/fhe_cnn.py`: Wide 1-Conv 아키텍처 정의 (16 channels, Stride 3, Square activation, no BN)
+  - 구조: Conv(1→16, k=7, s=3) → Square → Flatten(3136) → FC(3136→128) → Square → FC(128→7)
+  - TenSEAL용 파라미터 추출 도우미 포함
+- `fhe_emotion/he/tenseal_context.py`: CKKS 컨텍스트 생성 (poly_modulus=32768), 벡터 암복호화, 직렬화 유틸리티
+- `fhe_emotion/he/fhe_inference.py`: PyTorch 가중치 로딩, im2col 기반 패킹 추론, `encrypted_inference_demo` 제공
+- `fhe_emotion/notebooks/`:
+  - `01_prepare_fer2013.ipynb`: FER2013 데이터셋 전처리
+  - `02_train_plain_cnn.ipynb`: 평문 CNN 학습 (50 epochs)
+  - `03_tenseal_encrypted_inference.ipynb`: 단일 샘플 암호화 추론 데모
+  - `04_tenseal_test_accuracy.ipynb`: 다중 샘플 정확도 테스트
+- `fhe_emotion/scripts/`:
+  - `setup_env.sh`: 프로젝트 의존성 설치 및 Jupyter 커널 등록
+  - `run_train.sh`: 학습 노트북 비대화식 실행
+  - `run_encrypted_infer.sh`: TenSEAL 추론 모듈 CLI 실행
+- `fhe_emotion/data/processed/`: 전처리 후 저장되는 텐서 및 클래스 가중치
 
 ## 참고자료
 - 데이터셋: [FER2013 (Kaggle)](https://www.kaggle.com/datasets/msambare/fer2013)
-- FHE 패턴: [smile-ffg/he-man-tenseal](https://github.com/smile-ffg/he-man-tenseal)
+- FHE 패턴: [TenSEAL Tutorial 4 - Encrypted Convolution on MNIST](https://github.com/OpenMined/TenSEAL/blob/main/tutorials/Tutorial%204%20-%20Encrypted%20Convolution%20on%20MNIST.ipynb)
+
+## 주요 설계 결정
+- **Batch Normalization 제거**: FHE 추론 단순화를 위해 BN 완전 제거
+- **Stride 3 사용**: Stride 2(21×21=441 windows) 대신 Stride 3(14×14=196 windows)으로 CKKS 슬롯 요구량 감소
+- **16 채널 사용**: 16×196=3,136 슬롯으로 32768 poly_modulus_degree에 여유롭게 수용
+- **Multiplicative Depth 최소화**: Conv→Square→FC→Square 총 4단계로 CKKS 노이즈 누적 최소화
 
 필요한 부분(학습 epoch 수, 컨텍스트 파라미터 등)을 조정하면 더 빠른 실험이나 정확도 개선을 쉽게 시도할 수 있습니다.

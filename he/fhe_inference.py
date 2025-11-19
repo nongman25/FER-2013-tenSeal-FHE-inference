@@ -22,7 +22,7 @@ if not LOGGER.handlers:
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data" / "processed"
-MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013.pt"
+MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013_2.pt"
 NORM_STATS_PATH = PROJECT_ROOT / "models" / "normalization_stats.json"
 
 EncryptedScalar = ts.CKKSVector
@@ -150,6 +150,11 @@ class EncryptedCNNRunner:
         fmap = self.encrypt_image(tensor)
         LOGGER.info("Encrypt -> Conv1")
         fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=3)
+        fmap = self.square_map(fmap)
+        
+        # Conv2: kernel=3, stride=2
+        LOGGER.info("Conv1 -> Conv2")
+        fmap = self.conv2d(fmap, self.conv_params[1]["weight"], self.conv_params[1]["bias"], stride=2)
         fmap = self.square_map(fmap)
         
         flat = self.flatten(fmap)

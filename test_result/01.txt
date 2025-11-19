@@ -1,0 +1,101 @@
+History: [{'epoch': 1, 'train_loss': 1.8657562695159455, 'train_acc': 0.25775889094012333, 'val_loss': 1.8014529149291176, 'val_acc': 0.3265533574811925}, {'epoch': 2, 'train_loss': 1.7756445527579154, 'train_acc': 0.32986171583823887, 'val_loss': 1.75172120125123, 'val_acc': 0.36305377542490946}, {'epoch': 3, 'train_loss': 1.7182607730107895, 'train_acc': 0.35689156710439235, 'val_loss': 1.6934875855707598, 'val_acc': 0.3616606297018668}, {'epoch': 4, 'train_loss': 1.679657934389583, 'train_acc': 0.3687693754571737, 'val_loss': 1.6806090256735355, 'val_acc': 0.39509612705488995}, {'epoch': 5, 'train_loss': 1.6431967640351617, 'train_acc': 0.3748998571876415, 'val_loss': 1.6521968642593792, 'val_acc': 0.3574811925327389}, {'epoch': 6, 'train_loss': 1.6230987800426204, 'train_acc': 0.3782785885959107, 'val_loss': 1.655008397616527, 'val_acc': 0.385065477848983}, {'epoch': 7, 'train_loss': 1.6019596687831983, 'train_acc': 0.3860810198892333, 'val_loss': 1.61360198553308, 'val_acc': 0.3663973251602118}, {'epoch': 8, 'train_loss': 1.590742932769787, 'train_acc': 0.39127102999059526, 'val_loss': 1.630185532882108, 'val_acc': 0.3839509612705489}, {'epoch': 9, 'train_loss': 1.5660743005946163, 'train_acc': 0.39882963530600163, 'val_loss': 1.6057351072640365, 'val_acc': 0.3973251602117582}, {'epoch': 10, 'train_loss': 1.553916403627673, 'train_acc': 0.4015813856282002, 'val_loss': 1.6103197862657541, 'val_acc': 0.3970465310671496}, {'epoch': 11, 'train_loss': 1.5390321670303881, 'train_acc': 0.40725904768539484, 'val_loss': 1.624615248513773, 'val_acc': 0.4020618556701031}, {'epoch': 12, 'train_loss': 1.5390515910150315, 'train_acc': 0.411438921592532, 'val_loss': 1.654271370755427, 'val_acc': 0.39398161047645586}, {'epoch': 13, 'train_loss': 1.5288575073740003, 'train_acc': 0.4086175067052144, 'val_loss': 1.6548750268014636, 'val_acc': 0.41237113402061853}, {'epoch': 14, 'train_loss': 1.5272440054834464, 'train_acc': 0.41213556724372147, 'val_loss': 1.611316432292563, 'val_acc': 0.379771524101421}, {'epoch': 15, 'train_loss': 1.4903458930834106, 'train_acc': 0.41774356473579716, 'val_loss': 1.6060964247747929, 'val_acc': 0.4095848425745333}, {'epoch': 16, 'train_loss': 1.5001368876256607, 'train_acc': 0.4173604096276429, 'val_loss': 1.6744549318620772, 'val_acc': 0.3689049874616885}, {'epoch': 17, 'train_loss': 1.4808089877209687, 'train_acc': 0.4254066668988819, 'val_loss': 1.628467859382183, 'val_acc': 0.41014210086375036}, {'epoch': 18, 'train_loss': 1.4716550883938224, 'train_acc': 0.4216796126650179, 'val_loss': 1.6497178973843374, 'val_acc': 0.4095848425745333}, {'epoch': 19, 'train_loss': 1.4778257764167657, 'train_acc': 0.4278797589606047, 'val_loss': 1.627680072747223, 'val_acc': 0.4151574254667038}, {'epoch': 20, 'train_loss': 1.4672898102829774, 'train_acc': 0.42767076526524783, 'val_loss': 1.6267701904233633, 'val_acc': 0.4065199219838395}, {'epoch': 21, 'train_loss': 1.4562079244706527, 'train_acc': 0.4302483541746491, 'val_loss': 1.6307936362417736, 'val_acc': 0.4093062134299248}, {'epoch': 22, 'train_loss': 1.4721608142451834, 'train_acc': 0.42690445504893937, 'val_loss': 1.625608343721333, 'val_acc': 0.42073000835887436}, {'epoch': 23, 'train_loss': 1.4701563816234324, 'train_acc': 0.4268347904838204, 'val_loss': 1.6163259133152656, 'val_acc': 0.4151574254667038}, {'epoch': 24, 'train_loss': 1.4404973997633437, 'train_acc': 0.434776550907381, 'val_loss': 1.5718175411290796, 'val_acc': 0.42073000835887436}, {'epoch': 25, 'train_loss': 1.4277988089891955, 'train_acc': 0.4401407224215403, 'val_loss': 1.673816180421835, 'val_acc': 0.43076065756478127}, {'epoch': 26, 'train_loss': 1.4341815964190447, 'train_acc': 0.43958340590058864, 'val_loss': 1.6304657351973995, 'val_acc': 0.4118138757314015}, {'epoch': 27, 'train_loss': 1.4302008737030063, 'train_acc': 0.4342540666689888, 'val_loss': 1.7069873278371535, 'val_acc': 0.4182223460573976}, {'epoch': 28, 'train_loss': 1.4313136952362437, 'train_acc': 0.43669232644815215, 'val_loss': 1.6610794537709794, 'val_acc': 0.41432153803287824}, {'epoch': 29, 'train_loss': 1.4294848910709788, 'train_acc': 0.43240795569333657, 'val_loss': 1.6630526548077649, 'val_acc': 0.41460016717748677}, {'epoch': 30, 'train_loss': 1.4367770881811286, 'train_acc': 0.43662266188303317, 'val_loss': 1.6760048529802176, 'val_acc': 0.42295904151574254}, {'epoch': 31, 'train_loss': 1.4222212541754864, 'train_acc': 0.4427183113309415, 'val_loss': 1.5829260193494477, 'val_acc': 0.4118138757314015}, {'epoch': 32, 'train_loss': 1.411031603107275, 'train_acc': 0.4476296631718277, 'val_loss': 1.6571767392780297, 'val_acc': 0.42156589579269993}, {'epoch': 33, 'train_loss': 1.400143574553849, 'train_acc': 0.44432059632867743, 'val_loss': 1.614226688362822, 'val_acc': 0.43466146558930063}, {'epoch': 34, 'train_loss': 1.4089323877395519, 'train_acc': 0.44630603643456757, 'val_loss': 1.6438998073613487, 'val_acc': 0.40373363053775424}, {'epoch': 35, 'train_loss': 1.4007195261288863, 'train_acc': 0.44613187502177015, 'val_loss': 1.6494461568526553, 'val_acc': 0.4282529952633045}, {'epoch': 36, 'train_loss': 1.4204173471624606, 'train_acc': 0.4364485004702358, 'val_loss': 1.6245242324038847, 'val_acc': 0.42295904151574254}, {'epoch': 37, 'train_loss': 1.392258805862236, 'train_acc': 0.44686335295551916, 'val_loss': 1.6380656702865894, 'val_acc': 0.41738645862357204}, {'epoch': 38, 'train_loss': 1.4056234207807397, 'train_acc': 0.4429969695914173, 'val_loss': 1.6260324883474284, 'val_acc': 0.41460016717748677}, {'epoch': 39, 'train_loss': 1.3878529701218294, 'train_acc': 0.44512173882754535, 'val_loss': 1.6751899527420604, 'val_acc': 0.42490944552800225}, {'epoch': 40, 'train_loss': 1.4025692110371575, 'train_acc': 0.4497196001253962, 'val_loss': 1.7329356402000966, 'val_acc': 0.4031763722485372}, {'epoch': 41, 'train_loss': 1.3813448749269046, 'train_acc': 0.44818697969277926, 'val_loss': 1.674879466069047, 'val_acc': 0.43661186960156034}, {'epoch': 42, 'train_loss': 1.3972184978901205, 'train_acc': 0.4447734160019506, 'val_loss': 1.6181815416077512, 'val_acc': 0.42184452493730845}, {'epoch': 43, 'train_loss': 1.3741699671345846, 'train_acc': 0.4536904803371765, 'val_loss': 1.6699507061270626, 'val_acc': 0.422123154081917}, {'epoch': 44, 'train_loss': 1.387359634778306, 'train_acc': 0.4511825559928942, 'val_loss': 1.6073649601206934, 'val_acc': 0.4285316244079131}, {'epoch': 45, 'train_loss': 1.3760164470573615, 'train_acc': 0.4489532899090877, 'val_loss': 1.651204876562253, 'val_acc': 0.422123154081917}, {'epoch': 46, 'train_loss': 1.3634631348908592, 'train_acc': 0.4549792747918771, 'val_loss': 1.619846956266205, 'val_acc': 0.42630259125104486}, {'epoch': 47, 'train_loss': 1.376694936385087, 'train_acc': 0.45247135044759484, 'val_loss': 1.679575237151008, 'val_acc': 0.41877960434661465}, {'epoch': 48, 'train_loss': 1.3772290622790642, 'train_acc': 0.45229718903479743, 'val_loss': 1.5853015398308241, 'val_acc': 0.4212872666480914}, {'epoch': 49, 'train_loss': 1.37384056154723, 'train_acc': 0.4550489393569961, 'val_loss': 1.6728315484925678, 'val_acc': 0.4302033992755642}, {'epoch': 50, 'train_loss': 1.364801613019466, 'train_acc': 0.45187920164408374, 'val_loss': 1.6480827001550131, 'val_acc': 0.43995541933686266}]
+
+Starting inference on 20 samples...
+  0%|          | 0/20 [00:00<?, ?it/s][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 0 | Encrypted pred: 0
+  5%|▌         | 1/20 [00:19<06:02, 19.06s/it][INFO] Plain pred: 0 | Encrypted pred: 0
+  5%|▌         | 1/20 [00:19<06:02, 19.06s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 3 | Encrypted pred: 3
+ 10%|█         | 2/20 [00:36<05:29, 18.32s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 3 | Encrypted pred: 3
+ 10%|█         | 2/20 [00:36<05:29, 18.32s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 15%|█▌        | 3/20 [00:54<05:06, 18.02s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 15%|█▌        | 3/20 [00:54<05:06, 18.02s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 3 | Encrypted pred: 3
+ 20%|██        | 4/20 [01:12<04:49, 18.07s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 3 | Encrypted pred: 3
+ 20%|██        | 4/20 [01:12<04:49, 18.07s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 4 | Encrypted pred: 4
+ 25%|██▌       | 5/20 [01:30<04:28, 17.91s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 4 | Encrypted pred: 4
+ 25%|██▌       | 5/20 [01:30<04:28, 17.91s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 5 | Encrypted pred: 5
+ 30%|███       | 6/20 [01:48<04:10, 17.87s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 5 | Encrypted pred: 5
+ 30%|███       | 6/20 [01:48<04:10, 17.87s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 35%|███▌      | 7/20 [02:06<03:53, 17.99s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 35%|███▌      | 7/20 [02:06<03:53, 17.99s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 40%|████      | 8/20 [02:24<03:36, 18.01s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Using packed TenSEAL runner for inference
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 40%|████      | 8/20 [02:24<03:36, 18.01s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 45%|████▌     | 9/20 [02:42<03:19, 18.10s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 45%|████▌     | 9/20 [02:42<03:19, 18.10s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 50%|█████     | 10/20 [03:01<03:01, 18.18s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 50%|█████     | 10/20 [03:01<03:01, 18.18s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 1 | Encrypted pred: 1
+ 55%|█████▌    | 11/20 [03:19<02:43, 18.21s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Using packed TenSEAL runner for inference
+[INFO] Plain pred: 1 | Encrypted pred: 1
+ 55%|█████▌    | 11/20 [03:19<02:43, 18.21s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 6 | Encrypted pred: 6
+ 60%|██████    | 12/20 [03:37<02:26, 18.28s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Using packed TenSEAL runner for inference
+[INFO] Plain pred: 6 | Encrypted pred: 6
+ 60%|██████    | 12/20 [03:37<02:26, 18.28s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 65%|██████▌   | 13/20 [03:55<02:07, 18.27s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 65%|██████▌   | 13/20 [03:55<02:07, 18.27s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 5 | Encrypted pred: 5
+ 70%|███████   | 14/20 [04:14<01:49, 18.32s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 5 | Encrypted pred: 5
+ 70%|███████   | 14/20 [04:14<01:49, 18.32s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 75%|███████▌  | 15/20 [04:33<01:32, 18.59s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 0 | Encrypted pred: 0
+ 75%|███████▌  | 15/20 [04:33<01:32, 18.59s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 80%|████████  | 16/20 [04:53<01:15, 18.90s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 2 | Encrypted pred: 2
+ 80%|████████  | 16/20 [04:53<01:15, 18.90s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 6 | Encrypted pred: 6
+ 85%|████████▌ | 17/20 [05:11<00:56, 18.84s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 6 | Encrypted pred: 6
+ 85%|████████▌ | 17/20 [05:11<00:56, 18.84s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 6 | Encrypted pred: 0
+ 90%|█████████ | 18/20 [05:31<00:38, 19.01s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 6 | Encrypted pred: 0
+ 90%|█████████ | 18/20 [05:31<00:38, 19.01s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+[INFO] Plain pred: 6 | Encrypted pred: 6
+ 95%|█████████▌| 19/20 [05:50<00:18, 18.93s/it][INFO] Loading model weights from /Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/models/fhe_cnn_fer2013.pt
+INFO] Plain pred: 5 | Encrypted pred: 5
+100%|██████████| 20/20 [06:11<00:00, 18.60s/it][INFO] Plain pred: 5 | Encrypted pred: 5
+100%|██████████| 20/20 [06:11<00:00, 18.60s/it]
+
+--- Test Complete ---
+Time taken: 371.94s (18.60s per sample)
+Plain Model Accuracy: 10/20 (50.00%)
+Encrypted Model Accuracy: 10/20 (50.00%)
