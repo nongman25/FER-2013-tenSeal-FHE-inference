@@ -22,17 +22,17 @@ class FHEEmotionCNN(nn.Module):
 
     def __init__(self, num_classes: int = 7) -> None:
         super().__init__()
-        # Conv1: 1 -> 4 channels, kernel 7x7, stride 3
+        # Conv1: 1 -> 16 channels, kernel 7x7, stride 3
         # Input: 48x48
-        # Output: (48 - 7) // 3 + 1 = 14. Shape: 4 x 14 x 14
-        self.conv1 = nn.Conv2d(1, 4, kernel_size=7, stride=3, padding=0)
+        # Output: (48 - 7) // 3 + 1 = 14. Shape: 16 x 14 x 14
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=7, stride=3, padding=0)
         self.act1 = Square()
         
-        # Flatten size: 4 * 14 * 14 = 784
-        self.fc1 = nn.Linear(4 * 14 * 14, 64)
+        # Flatten size: 16 * 14 * 14 = 3136
+        self.fc1 = nn.Linear(16 * 14 * 14, 128)
         self.act2 = Square()
         
-        self.fc2 = nn.Linear(64, num_classes)
+        self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.conv1(x)
