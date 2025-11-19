@@ -285,7 +285,7 @@ def encrypted_inference_demo(context: ts.Context | None = None, sample_index: in
     
     if use_packed:
         LOGGER.info("Using packed TenSEAL runner for inference")
-        runner = PackedEncryptedCNNRunner(context, params)
+        runner = PackedEncryptedCNNRunner(context, params, log_steps=False)
     else:
         LOGGER.info("Using scalar TenSEAL runner for inference (fallback)")
         runner = EncryptedCNNRunner(context, params)
@@ -317,11 +317,11 @@ def encrypted_inference_demo(context: ts.Context | None = None, sample_index: in
     plain_pred = int(torch.argmax(plain_probs).item())
     enc_pred = int(np.argmax(encrypted_probs))
 
-    LOGGER.info("Sample %d | True label: %d", sample_index, label)
-    LOGGER.info("Plain logits: %s", np.array2string(plain_logits.numpy(), precision=3))
-    LOGGER.info("Encrypted logits (decrypted): %s", np.array2string(decrypted_logits, precision=3))
-    LOGGER.info("Plain probs: %s", np.array2string(plain_probs.numpy(), precision=3))
-    LOGGER.info("Encrypted probs: %s", np.array2string(encrypted_probs, precision=3))
+    # LOGGER.info("Sample %d | True label: %d", sample_index, label)
+    # LOGGER.info("Plain logits: %s", np.array2string(plain_logits.numpy(), precision=3))
+    # LOGGER.info("Encrypted logits (decrypted): %s", np.array2string(decrypted_logits, precision=3))
+    # LOGGER.info("Plain probs: %s", np.array2string(plain_probs.numpy(), precision=3))
+    # LOGGER.info("Encrypted probs: %s", np.array2string(encrypted_probs, precision=3))
     LOGGER.info("Plain pred: %d | Encrypted pred: %d", plain_pred, enc_pred)
 
     return {
