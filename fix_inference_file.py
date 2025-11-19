@@ -1,4 +1,7 @@
-"""End-to-end TenSEAL inference demo for the FHE-friendly CNN."""
+
+from pathlib import Path
+
+content = r'''"""End-to-end TenSEAL inference demo for the FHE-friendly CNN."""
 from __future__ import annotations
 
 import json
@@ -341,3 +344,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+'''
+
+target_path = Path("/Users/hyunwookkim/Documents/study/25y2s/보안프로젝트설계/프로젝트/프로토타입/learning_test_01/fhe_emotion/he/fhe_inference.py")
+target_path.write_text(content, encoding="utf-8")
+print(f"Successfully overwrote {target_path}")
