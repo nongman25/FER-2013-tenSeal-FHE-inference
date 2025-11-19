@@ -8,14 +8,13 @@ import numpy as np
 import tenseal as ts
 
 
-# TenSEAL 튜토리얼에서 권장하는 4-레벨 체인(60,40,40,60 비트)을 기본값으로 사용한다.
+# TenSEAL Tutorial 4 parameters
+# Security level 128-bits with poly_modulus_degree=8192
+# Scale = 2^26
 DEFAULT_POLY_MODULUS_DEGREE = 8192
-DEFAULT_COEFF_MOD_BIT_SIZES = (60, 40, 40, 60)
-DEFAULT_GLOBAL_SCALE = 2**40
-ALT_CHAINS = [
-    (40, 21, 21, 40),
-    (60, 30, 30, 30, 60),
-]
+# [31, 26, 26, 26, 26, 26, 26, 31]
+DEFAULT_COEFF_MOD_BIT_SIZES = (31, 26, 26, 26, 26, 26, 26, 31)
+DEFAULT_GLOBAL_SCALE = 2**26
 
 
 def create_context(
@@ -24,39 +23,22 @@ def create_context(
     global_scale: float = DEFAULT_GLOBAL_SCALE,
 ) -> ts.Context:
     """Instantiate a CKKS context with keys for rotations and relinearization."""
-    attempted = []
-    chosen_chain = list(coeff_mod_bit_sizes)
-    tried = []
-    for chain in [chosen_chain, *ALT_CHAINS]:
-        try:
-            context = ts.context(
-                ts.SCHEME_TYPE.CKKS,
-                poly_modulus_degree=poly_modulus_degree,
-                coeff_mod_bit_sizes=list(chain),
-            )
-            chosen_chain = list(chain)
-            break
-        except ValueError as exc:
-            tried.append((chain, exc))
-    else:
-        msg = "Failed to create CKKS context. Tried chains:\n"
-        for chain, exc in tried:
-            msg += f"  - {chain}: {exc}\n"
-        raise ValueError(msg)
+    context = ts.context(
+        ts.SCHEME_TYPE.CKKS,
+        poly_modulus_degree=poly_modulus_degree,
+        coeff_mod_bit_sizes=list(coeff_mod_bit_sizes),
+    )
     context.global_scale = global_scale
-    context.auto_rescale = True
-    context.auto_mod_switch = True
-    if hasattr(context, "auto_relin"):
-        context.auto_relin = True
     context.generate_galois_keys()
     context.generate_relin_keys()
     return context
 
 
-def encrypt_vector(context: ts.Context, values: Iterable[float]) -> ts.CKKSVector:
+def encrypt_vector(context: ts.Context, values: Iterable[float] | np.ndarray) -> ts.CKKSVector:
     """Encrypt a flat vector of floats using CKKS."""
-    arr = np.asarray(list(values), dtype=np.float64)
-    return ts.ckks_vector(context, arr)
+    if isinstance(values, np.ndarray):
+        values = values.flatten().tolist()
+    return ts.ckks_vector(context, list(values))
 
 
 def decrypt_vector(context: ts.Context, ciphertext: ts.CKKSVector) -> np.ndarray:
