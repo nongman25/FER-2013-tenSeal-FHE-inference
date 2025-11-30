@@ -39,3 +39,15 @@ kaggle.json
 
 # Logs
 *.log
+.env
+out.txt
+models/concrete_cnn_fhe/client.zip
+models/concrete_cnn_fhe/server.zip
+notebooks/.artifacts/_clear_forward_proxy.1.initial.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.2.after-fusing.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.3.after-fusing.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.4.after-fusing.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.5.after-fusing.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.6.after-fusing.graph.txt
+notebooks/.artifacts/_clear_forward_proxy.7.final.graph.txt
+test_result/02.txt
