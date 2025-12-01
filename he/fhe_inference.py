@@ -22,7 +22,7 @@ if not LOGGER.handlers:
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data" / "processed"
-MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013_enhanced.pt"  # 새 모델 파일
+MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013_enhanced.pt"  # Fast inference model (k12, s12, 4x4 output)
 NORM_STATS_PATH = PROJECT_ROOT / "models" / "normalization_stats.json"
 
 EncryptedScalar = ts.CKKSVector
@@ -146,14 +146,14 @@ class EncryptedCNNRunner:
         return [self.ops.square(v) for v in values]
 
     def forward(self, tensor: torch.Tensor) -> List[EncryptedScalar]:
-        # Conv1: 1->16 channels, kernel=7, stride=3
+        # Conv1: 1->16 channels, kernel=12, stride=12
         fmap = self.encrypt_image(tensor)
-        LOGGER.info("Encrypt -> Conv1 (16 channels)")
-        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=3)
+        LOGGER.info("Encrypt -> Conv1 (16 channels, k12, s12)")
+        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=12)
         fmap = self.square_map(fmap)
         
         flat = self.flatten(fmap)
-        LOGGER.info("Flatten -> FC1 (128 nodes)")
+        LOGGER.info("Flatten(256) -> FC1 (128 nodes)")
         vec = self.linear(flat, self.linear_params[0]["weight"], self.linear_params[0]["bias"])
         vec = self.square_vector(vec)
         
@@ -164,8 +164,9 @@ class EncryptedCNNRunner:
 
 class PackedEncryptedCNNRunner:
     """
-    Packed Encrypted CNN Runner using TenSEAL's im2col and pack_vectors.
-    Follows Tutorial 4 structure.
+    TenSEAL Packed (SIMD) inference for 1-conv CNN (Fast variant).
+    Uses im2col + matrix-vector for Conv, then FC layers.
+    16 channels * 16 = 256 slots per CKKS vector (ultra-efficient packing, 12x faster!).
     """
 
     def __init__(
@@ -191,9 +192,9 @@ class PackedEncryptedCNNRunner:
     def forward(self, tensor: torch.Tensor) -> ts.CKKSVector:
         # 1. im2col encoding
         # tensor shape: (1, 48, 48)
-        # Conv1: kernel=7, stride=3
-        kernel_shape = (7, 7)
-        stride = 3
+        # Conv1: kernel=12, stride=12 (Fast inference optimized)
+        kernel_shape = (12, 12)
+        stride = 12
         
         image_list = tensor.view(48, 48).tolist()
         
@@ -208,9 +209,8 @@ class PackedEncryptedCNNRunner:
         # self.conv1_weight is list of kernels [out_channel][in_channel][k][k]
         # Since in_channel is 1, we iterate over out_channels
         for kernel, bias in zip(self.conv1_weight, self.conv1_bias):
-            # kernel is [1, 7, 7] list. conv2d_im2col expects [7, 7] if single channel?
-            # Actually conv2d_im2col expects a single kernel window.
-            # Since input is 1 channel, kernel[0] is the 7x7 matrix.
+            # kernel is [1, 12, 12] list. conv2d_im2col expects [12, 12] if single channel.
+            # Since input is 1 channel, kernel[0] is the 12x12 matrix.
             k_flat = kernel[0] 
             y = enc_x.conv2d_im2col(k_flat, windows_nb) + bias
             enc_channels.append(y)
