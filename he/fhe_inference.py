@@ -22,7 +22,7 @@ if not LOGGER.handlers:
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data" / "processed"
-MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013_2.pt"
+MODEL_PATH = PROJECT_ROOT / "models" / "fhe_cnn_fer2013_enhanced.pt"  # 새 모델 파일
 NORM_STATS_PATH = PROJECT_ROOT / "models" / "normalization_stats.json"
 
 EncryptedScalar = ts.CKKSVector
@@ -146,23 +146,18 @@ class EncryptedCNNRunner:
         return [self.ops.square(v) for v in values]
 
     def forward(self, tensor: torch.Tensor) -> List[EncryptedScalar]:
-        # Conv1: kernel=7, stride=3
+        # Conv1: 1->16 channels, kernel=7, stride=3
         fmap = self.encrypt_image(tensor)
-        LOGGER.info("Encrypt -> Conv1")
+        LOGGER.info("Encrypt -> Conv1 (16 channels)")
         fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=3)
         fmap = self.square_map(fmap)
         
-        # Conv2: kernel=3, stride=2
-        LOGGER.info("Conv1 -> Conv2")
-        fmap = self.conv2d(fmap, self.conv_params[1]["weight"], self.conv_params[1]["bias"], stride=2)
-        fmap = self.square_map(fmap)
-        
         flat = self.flatten(fmap)
-        LOGGER.info("Flatten -> FC1")
+        LOGGER.info("Flatten -> FC1 (128 nodes)")
         vec = self.linear(flat, self.linear_params[0]["weight"], self.linear_params[0]["bias"])
         vec = self.square_vector(vec)
         
-        LOGGER.info("FC1 -> FC2")
+        LOGGER.info("FC1 -> FC2 (7 classes)")
         logits = self.linear(vec, self.linear_params[1]["weight"], self.linear_params[1]["bias"])
         return logits
 

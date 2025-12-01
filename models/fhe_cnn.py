@@ -18,7 +18,7 @@ class FHEEmotionCNN(nn.Module):
     """
     Wide 1-Conv FHE-friendly CNN without Batch Normalization.
     Optimized for TenSEAL Packed Inference (im2col).
-    Structure: Conv(24ch, s2) -> Square -> FC -> Square -> FC
+    Structure: Conv(16ch, s3) -> Square -> FC(128) -> Square -> FC
     """
 
     def __init__(self, num_classes: int = 7) -> None:

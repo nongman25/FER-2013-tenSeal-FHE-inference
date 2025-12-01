@@ -1,0 +1,13 @@
+# Set PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu for CPU installs (see scripts/setup_env.sh).
+torch
+torchvision
+numpy<2
+pandas
+scikit-learn
+matplotlib
+tqdm
+pillow
+tenseal
+jupyter
+ipykernel
+kaggle

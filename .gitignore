@@ -1,16 +1,16 @@
-# Virtual Environment
-.venv
+# Virtual environments
+.venv/
 venv/
 env/
 
-# Data files
+# Data files and large artifacts
 data/
-./data
 *.csv
+*.zip
 
 # Python cache
-*pycache*
 __pycache__/
+*pycache*
 *.pyc
 *.pyo
 *.pyd
@@ -23,8 +23,10 @@ __pycache__/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb_checkpoints/
+notebooks/.artifacts/
 
-# API Keys
+# Secrets
+.env
 kaggle.json
 *.json.secret
 
@@ -34,20 +36,11 @@ kaggle.json
 *.swp
 *.swo
 
-# macOS
+# OS noise
 .DS_Store
 
-# Logs
+# Logs and outputs
 *.log
-.env
 out.txt
-models/concrete_cnn_fhe/client.zip
-models/concrete_cnn_fhe/server.zip
-notebooks/.artifacts/_clear_forward_proxy.1.initial.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.2.after-fusing.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.3.after-fusing.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.4.after-fusing.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.5.after-fusing.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.6.after-fusing.graph.txt
-notebooks/.artifacts/_clear_forward_proxy.7.final.graph.txt
-test_result/02.txt
+test_result/*.txt
+models/concrete_cnn_fhe/*.zip
