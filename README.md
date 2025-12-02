@@ -37,7 +37,7 @@ fhe_emotion/
 │
 ├── models/                       # 신경망 정의 및 학습 모델
 │   ├── fhe_cnn.py               # FHE-친화적 CNN 아키텍처
-│   ├── fhe_cnn_fer2013_2.pt     # 학습된 모델 가중치
+│   ├── fhe_cnn_fer2013_enhanced.pt  # 학습된 모델 가중치 (Balanced k=9, s=6)
 │   └── normalization_stats.json # 입력 정규화 통계 (mean, std)
 │
 ├── he/                           # 동형암호(TenSEAL) 모듈
@@ -60,22 +60,22 @@ fhe_emotion/
 
 ## 🧠 신경망 모델 구조
 
-### FHEEmotionCNN: Ultra-Fast 1-Conv Architecture
+### FHEEmotionCNN: Balanced 1-Conv Architecture (k=9, s=6)
 
 동형암호 환경에서는 **곱셈 깊이(multiplicative depth)**가 성능 병목이므로, 깊이 대신 **너비를 넓힌 얕은 CNN**을 사용합니다.  
-**대형 stride(12)**를 사용하여 출력 크기를 극단적으로 줄여 **초고속 추론**을 달성합니다.
+**kernel=9, stride=6** 조합으로 출력 크기를 줄이면서도 표현력을 유지하는 **균형형 CNN**을 사용합니다.
 
 #### 아키텍처 다이어그램
 ```
 Input (1×48×48)
     ↓
-[Conv2d: 1→16 channels, kernel=12×12, stride=12] ← 대형 stride로 출력 축소
-    ↓ (16×4×4)
+[Conv2d: 1→16 channels, kernel=9×9, stride=6] ← 균형 잡힌 downsampling
+    ↓ (16×7×7)
 [Square Activation: x²]  ← 곱셈 깊이 +1
     ↓
-[Flatten → 256]  ← 매우 작은 벡터!
+[Flatten → 784]  ← 여전히 작은 벡터
     ↓
-[FC: 256 → 128]  ← 경량 은닉층
+[FC: 784 → 128]  ← 경량 은닉층
     ↓
 [Square Activation: x²]  ← 곱셈 깊이 +1
     ↓
@@ -88,33 +88,33 @@ Output (7 logits)
 
 | 레이어 | 입력 크기 | 출력 크기 | 파라미터 수 | 설명 |
 |--------|-----------|-----------|-------------|------|
-| **Conv1** | 1×48×48 | 16×4×4 | 16×(1×12×12)+16 = 2,320 | 대형 kernel로 aggressive downsampling |
-| **Square** | 16×4×4 | 16×4×4 | 0 | 비선형 활성화 (FHE 친화적) |
-| **Flatten** | 16×4×4 | 256 | 0 | 초소형 벡터로 변환 |
-| **FC1** | 256 | 128 | 256×128+128 = 32,896 | 경량 표현 학습 |
+| **Conv1** | 1×48×48 | 16×7×7 | 16×(1×9×9)+16 = 1,312 | kernel=9, stride=6으로 downsampling |
+| **Square** | 16×7×7 | 16×7×7 | 0 | 비선형 활성화 (FHE 친화적) |
+| **Flatten** | 16×7×7 | 784 | 0 | 16채널 feature map을 1D 벡터로 변환 |
+| **FC1** | 784 | 128 | 784×128+128 = 100,480 | 경량 표현 학습 |
 | **Square** | 128 | 128 | 0 | 비선형 활성화 |
 | **FC2** | 128 | 7 | 128×7+7 = 903 | 감정 클래스 분류 |
 
-**총 파라미터**: ~36K (초경량 모델)  
+**총 파라미터**: ~102K (여전히 경량 모델)  
 **Multiplicative Depth**: 3 (Conv → Square → FC → Square)
 
 #### 주요 설계 원칙
 1. **Batch Normalization 제거**: FHE에서 평균/분산 계산 불가 → 학습 시에도 BN 미사용
-2. **대형 Stride=12**: 48×48 → 4×4로 극단적 축소, CKKS 슬롯 256개만 사용 (초효율!)
+2. **Stride=6 & kernel=9**: 48×48 → 7×7로 축소, CKKS 슬롯 784개만 사용 (효율적)
 3. **Square 활성화**: ReLU 대신 $x^2$ 사용 (FHE에서 조건문 없이 곱셈만으로 구현 가능)
-4. **초경량 구조**: 16채널 × 4×4 = 256 슬롯으로 **이전 버전(3,136 슬롯) 대비 12배 감소**
+4. **균형형 구조**: 16채널 × 7×7 = 784 슬롯으로 **이전 stride 3 버전(3,136 슬롯) 대비 4배 감소**
 
 #### 속도 최적화 핵심
 
 **왜 빠른가?**
-- **슬롯 수**: 256개 (16,384 중 1.5%만 사용)
-- **FC 입력**: 256 (이전 3,136 대비 **12배 작음**)
-- **암호화 연산**: 벡터 크기가 작아 모든 연산 속도 향상
+- **슬롯 수**: 784개 (16,384 중 약 4.8% 사용)
+- **FC 입력**: 784 (이전 stride 3 실험 3,136 대비 **4배 작음**)
+- **암호화 연산**: 벡터 크기가 상대적으로 작아 모든 연산 속도 향상
 
-**성능 (16ch, kernel=12, stride=12, 50 epochs)**:
-- 정확도: **50-55%** (속도 우선 최적화)
-- 추론 시간: **~5-8초** (이전 18-20초 대비 **3배 빠름!** 🚀)
-- 슬롯 사용: 256 / 16,384 (1.5%, 극도로 효율적)
+**성능 (16ch, kernel=9, stride=6, 50 epochs)**:
+- 정확도: **50-55%** (속도 우선 최적화, 실제 환경에 따라 변동 가능)
+- 추론 시간: **수 초~수십 초/이미지 수준** (하드웨어·설정에 따라 상이)
+- 슬롯 사용: 784 / 16,384 (약 4.8%, 여유 있는 구성)
 
 ---
 
@@ -257,9 +257,8 @@ global_scale = 2**26  # 부동소수점 정밀도 제어
 ```python
 context = ts.context(
     ts.SCHEME_TYPE.CKKS,
-    poly_modulus_degree,
-    -1,  # 자동 보안 레벨
-    coeff_mod_bit_sizes
+    poly_modulus_degree=poly_modulus_degree,
+    coeff_mod_bit_sizes=coeff_mod_bit_sizes,
 )
 context.global_scale = global_scale
 context.generate_galois_keys()  # 회전 연산용
@@ -317,19 +316,19 @@ context.generate_relin_keys()   # 곱셈 후 차수 감소용
 **im2col 해결책**:
 ```python
 # 1. 입력을 컬럼 행렬로 변환 (im2col)
-#    48×48 이미지 → (14×14 windows) × (7×7 kernel) 행렬
-input_matrix = im2col_encoding(image, kernel_size=7, stride=3)
-# shape: [196, 49]
+#    48×48 이미지 → (7×7 windows) × (9×9 kernel) 행렬
+input_matrix = im2col_encoding(image, kernel_size=9, stride=6)
+# shape: [49, 81]
 
 # 2. 가중치를 행렬로 재배열
 weight_matrix = rearrange_weights(conv_weight)
-# shape: [49, 16]  (16 출력 채널)
+# shape: [81, 16]  (16 출력 채널)
 
 # 3. 단일 행렬곱으로 Convolution 수행
-output = input_matrix.mm(weight_matrix)  # [196, 16]
+output = input_matrix.mm(weight_matrix)  # [49, 16]
 
 # 4. 재구성
-output = output.reshape(16, 14, 14)  # 16 channels
+output = output.reshape(16, 7, 7)  # 16 channels
 ```
 
 **장점**: 반복문 없이 **단일 암호문 + 행렬곱 1회**로 Convolution 완료
@@ -375,7 +374,7 @@ jupyter notebook notebooks/02_train_plain_cnn.ipynb
 ```
 
 **출력**:
-- `models/fhe_cnn_fer2013_2.pt` (최고 성능 모델)
+- `models/fhe_cnn_fer2013_enhanced.pt` (최고 성능 모델)
 - `models/normalization_stats.json` (정규화 통계)
 
 **예상 학습 시간**: ~30분 (GPU) / ~2시간 (CPU)
@@ -409,13 +408,18 @@ Logits discrepancy: 0.0023 (CKKS approximation error)
 **Trade-off**: 정확도 2-3% 하락 vs FHE 구현 단순화
 
 ### 2. Stride 3 선택
-**실험 결과**:
+**실험 결과 (초기 버전 기준)**:
 | Stride | Windows | Channels | 슬롯 요구량 | CKKS 동작 |
 |--------|---------|----------|-------------|-----------|
 | 2 | 21×21=441 | 24 | 24×441=**10,584** | ❌ 슬롯 초과 (chunked error) |
 | 3 | 14×14=196 | 16 | 16×196=**3,136** | ✅ 정상 동작 |
 
-**결론**: Stride 3으로 슬롯 사용량 70% 절감
+**현재 모델**은 **kernel=9, stride=6**을 사용하며,
+- 윈도우 수: 7×7 = 49  
+- 채널 수: 16  
+- 슬롯 사용량: 16×49 = **784 슬롯**
+
+→ 초기 stride 3 설계 대비 슬롯 사용량을 추가로 줄여, **FHE 연산 안정성과 속도 모두를 개선한 Balanced 설정**입니다.
 
 ### 3. Square 활성화 (x²)
 **ReLU 문제점**: `max(0, x)` 조건문 → FHE에서 비교 연산 매우 느림  
@@ -501,10 +505,10 @@ Logits discrepancy: 0.0023 (CKKS approximation error)
 
 ### 정확도 vs 속도 Trade-off
 ```
-현재 설정 (Wide 1-Conv, 16ch, Stride 3)
+현재 설정 (Wide 1-Conv, 16ch, Stride 6)
 ├─ 정확도: 55-60% (Baseline 대비 -5~10%)
 ├─ 속도: 18-20초/이미지
-└─ 안정성: CKKS 슬롯 여유 (3,136 / 16,384)
+└─ 안정성: CKKS 슬롯 여유 (784 / 16,384)
 
 대안 1 (2-Conv, 32ch, Stride 2)
 ├─ 정확도: 65% (향상)
