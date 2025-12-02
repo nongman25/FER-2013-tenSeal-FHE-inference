@@ -16,23 +16,21 @@ class Square(nn.Module):
 
 class FHEEmotionCNN(nn.Module):
     """
-    Wide 1-Conv FHE-friendly CNN without Batch Normalization.
-    Optimized for TenSEAL Packed Inference (im2col) - Fast inference variant.
-    Structure: Conv(16ch, k12, s12) -> Square -> FC(128) -> Square -> FC
+    CNN architecture compatible with TenSEAL Tutorial 4.
+    Adapted for FER2013 (48x48 input, 7 classes).
+    Balanced speed & accuracy variant: kernel=9, stride=6.
     """
 
     def __init__(self, num_classes: int = 7) -> None:
         super().__init__()
+        # Conv1: 1 -> 16 channels, kernel 9x9, stride 6
         # Input: 48x48
-        
-        # Conv1: 1 -> 16 channels, kernel 12x12, stride 12
-        # Output: (48 - 12) // 12 + 1 = 4. Shape: 16 x 4 x 4
-        # Total slots needed: 16 * 16 = 256 (Very efficient! Fits easily in 16384 slots)
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=12, stride=12, padding=0)
+        # Output: (48 - 9) // 6 + 1 = 7. Shape: 16 x 7 x 7
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=9, stride=6, padding=0)
         self.act1 = Square()
         
-        # Flatten size: 16 * 4 * 4 = 256
-        self.fc1 = nn.Linear(16 * 4 * 4, 128)
+        # Flatten size: 16 * 7 * 7 = 784
+        self.fc1 = nn.Linear(16 * 7 * 7, 128)
         self.act2 = Square()
         
         self.fc2 = nn.Linear(128, num_classes)

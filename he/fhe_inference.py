@@ -146,14 +146,14 @@ class EncryptedCNNRunner:
         return [self.ops.square(v) for v in values]
 
     def forward(self, tensor: torch.Tensor) -> List[EncryptedScalar]:
-        # Conv1: 1->16 channels, kernel=12, stride=12
+        # Conv1: 1->16 channels, kernel=9, stride=6
         fmap = self.encrypt_image(tensor)
-        LOGGER.info("Encrypt -> Conv1 (16 channels, k12, s12)")
-        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=12)
+        LOGGER.info("Encrypt -> Conv1 (16 channels, k9, s6)")
+        fmap = self.conv2d(fmap, self.conv_params[0]["weight"], self.conv_params[0]["bias"], stride=6)
         fmap = self.square_map(fmap)
         
         flat = self.flatten(fmap)
-        LOGGER.info("Flatten(256) -> FC1 (128 nodes)")
+        LOGGER.info("Flatten(784) -> FC1 (128 nodes)")
         vec = self.linear(flat, self.linear_params[0]["weight"], self.linear_params[0]["bias"])
         vec = self.square_vector(vec)
         
@@ -164,9 +164,9 @@ class EncryptedCNNRunner:
 
 class PackedEncryptedCNNRunner:
     """
-    TenSEAL Packed (SIMD) inference for 1-conv CNN (Fast variant).
+    TenSEAL Packed (SIMD) inference for 1-conv CNN (Balanced variant).
     Uses im2col + matrix-vector for Conv, then FC layers.
-    16 channels * 16 = 256 slots per CKKS vector (ultra-efficient packing, 12x faster!).
+    16 channels * 49 = 784 slots per CKKS vector.
     """
 
     def __init__(
@@ -192,9 +192,9 @@ class PackedEncryptedCNNRunner:
     def forward(self, tensor: torch.Tensor) -> ts.CKKSVector:
         # 1. im2col encoding
         # tensor shape: (1, 48, 48)
-        # Conv1: kernel=12, stride=12 (Fast inference optimized)
-        kernel_shape = (12, 12)
-        stride = 12
+        # Conv1: kernel=9, stride=6 (Balanced speed & accuracy)
+        kernel_shape = (9, 9)
+        stride = 6
         
         image_list = tensor.view(48, 48).tolist()
         
