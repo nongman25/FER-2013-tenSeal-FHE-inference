@@ -44,3 +44,8 @@ kaggle.json
 out.txt
 test_result/*.txt
 models/concrete_cnn_fhe/*.zip
+
+# Prototype web app (tracked separately)
+prototype_app/
+
+my_face/
