@@ -49,3 +49,5 @@ models/concrete_cnn_fhe/*.zip
 prototype_app/
 
 my_face/
+docs/CKKS_AND_TENSEAL_GUIDE.md
+docs/PERFORMANCE_ANALYSIS.md
